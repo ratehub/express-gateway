@@ -1,0 +1,63 @@
+name: Auto Release to PackageCloud
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '.github/workflows/**'
+      - '**.md'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: |
+      !contains(github.event.head_commit.message, '[skip ci]') &&
+      !contains(github.event.head_commit.message, '[skip release]')
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        # needs to be false, otherwise the generated GITHUB_TOKEN will interfere
+        # with the global when used to write to the master (protected) branch
+        # https://github.com/semantic-release/semantic-release/blob/master/docs/recipes/github-actions.md#pushing-packagejson-changes-to-a-master-branch
+        persist-credentials: false
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: '14.X'
+        registry-url: https://packagecloud.io/ratehub/npm/npm/
+        scope: '@ratehub'
+
+    - name: Install Dependencies & semantic-release
+      env:
+        # NODE_AUTH_TOKEN must be set in step context (and not at job/workflow 
+        # context) or it will be override by the default, causing 401s.
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_READ }}
+      run: |
+        npm install -g semantic-release@18.x semantic-release-monorepo@7.x \
+          @semantic-release/git@10.x @semantic-release/commit-analyzer@9.x \
+          @semantic-release/npm@8.x @semantic-release/github@8.x \
+          @semantic-release/release-notes-generator@10.x
+        npm ci
+    - name: Configure read only access to a private NPM registry
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_RATEHUB_MACHINE_TOKEN }}
+        # NODE_AUTH_TOKEN must be set in step context (and not at job/workflow 
+        # context) or it will be override by the default, causing 401s.
+        NODE_AUTH_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
+        # Tell `npm publish` to use config created in previous setup.
+        NPM_CONFIG_USERCONFIG: /home/runner/work/_temp/.npmrc
+      run: |
+        echo always-auth=true > .npmrc
+        echo @ratehub:registry=https://packagecloud.io/ratehub/npm/npm/ > .npmrc
+        echo //packagecloud.io/ratehub/npm/npm/:_authToken=${{ secrets.PACKAGECLOUD_TOKEN }} >> .npmrc
+    - name: Install packages and dependencies
+      run: npm install
+      env:
+        PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
+    - name: Publish to npm
+      run: npm publish
+      env:
+        PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
