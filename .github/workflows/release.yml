@@ -41,6 +41,8 @@ jobs:
           @semantic-release/npm@8.x @semantic-release/github@8.x \
           @semantic-release/release-notes-generator@10.x
         npm ci
+    - name: Configure an NPM registry
+      run: npm config set registry https://packagecloud.io/ratehub/npm/npm/
     - name: Configure read only access to a private NPM registry
       env:
         GITHUB_TOKEN: ${{ secrets.GH_RATEHUB_MACHINE_TOKEN }}
