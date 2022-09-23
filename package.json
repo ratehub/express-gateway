@@ -1,9 +1,8 @@
 {
-  "name": "express-gateway",
+  "name": "ratehub-express-gateway",
   "version": "1.16.10",
   "description": "A microservices API gateway built on top of ExpressJS",
-  "homepage": "https://www.express-gateway.io",
-  "repository": "expressgateway/express-gateway",
+  "repository": "ratehub/ratehub-express-gateway",
   "keywords": [
     "microservices",
     "apis",
