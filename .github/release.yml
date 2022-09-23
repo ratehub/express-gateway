@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - "main"
+    paths-ignore:
+      - "deploy/**"
+      - ".github/**"
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    if: |
+      !contains(github.event.head_commit.message, '[skip ci]') &&
+      !contains(github.event.head_commit.message, '[skip release]')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          # needs to be false, otherwise the generated GITHUB_TOKEN will interfere
+          # with the global when used to write to the master (protected) branch
+          # https://github.com/semantic-release/semantic-release/blob/master/docs/recipes/github-actions.md#pushing-packagejson-changes-to-a-master-branch
+          persist-credentials: false
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "lts/*"
+
+      - name: Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_RATEHUB_MACHINE_TOKEN }}
+        run: |
+          npm install --no-package-lock --no-save semantic-release@19.x \
+            @semantic-release/commit-analyzer@9.x @semantic-release/github@8.x \
+            @semantic-release/release-notes-generator@10.x @semantic-release/git@10.x \
+            @semantic-release/changelog@6.x
+          npx semantic-release
