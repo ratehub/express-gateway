@@ -41,7 +41,7 @@ jobs:
           @semantic-release/npm@8.x @semantic-release/github@8.x \
           @semantic-release/release-notes-generator@10.x
         npm ci
-    - name: Generate Release (& Publish)
+    - name: Configure read only access to a private NPM registry
       env:
         GITHUB_TOKEN: ${{ secrets.GH_RATEHUB_MACHINE_TOKEN }}
         # NODE_AUTH_TOKEN must be set in step context (and not at job/workflow 
@@ -49,8 +49,15 @@ jobs:
         NODE_AUTH_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
         # Tell `npm publish` to use config created in previous setup.
         NPM_CONFIG_USERCONFIG: /home/runner/work/_temp/.npmrc
-      # tagFormat must a CLI arg (and not under release in package.json) to 
-      # support subsitution of the LERNA_PACKAGE_NAME env var.
       run: |
-        npx lerna exec --concurrency 1 -- npx semantic-release \
-          --tag-format='${LERNA_PACKAGE_NAME}-\${version}'
+        echo always-auth=true > .npmrc
+        echo @ratehub:registry=https://packagecloud.io/ratehub/npm/npm/ > .npmrc
+        echo //packagecloud.io/ratehub/npm/npm/:_authToken=${{ secrets.PACKAGECLOUD_TOKEN }} >> .npmrc
+    - name: Install packages and dependencies
+      run: npm install
+      env:
+        PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
+    - name: Publish to npm
+      run: npm publish
+      env:
+        PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
