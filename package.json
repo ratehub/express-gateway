@@ -1,9 +1,11 @@
 {
-  "name": "express-gateway",
-  "version": "1.16.10",
+  "name": "@ratehub/ratehub-express-gateway",
+  "version": "1.16.12",
   "description": "A microservices API gateway built on top of ExpressJS",
-  "homepage": "https://www.express-gateway.io",
-  "repository": "expressgateway/express-gateway",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ratehub/ratehub-express-gateway.git"
+  },
   "keywords": [
     "microservices",
     "apis",
@@ -138,9 +140,31 @@
   "yargs": {
     "boolean-negation": false
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/npm",
+    "@semantic-release/git"
+  ],
+  "release": {
+    "branches": [
+      "master"
+    ],
+    "publish": [
+      "@semantic-release/github",
+      "@semantic-release/npm"
+    ],
+    "prepare": [
+      [
+        "@semantic-release/git",
+        {
+          "assets": [
+            "package.json",
+            "package-lock.json"
+          ],
+          "message": "chore(release): ${nextRelease.version} \n\n${nextRelease.notes}"
+        }
+      ]
+    ]
   }
 }

@@ -1,0 +1,38 @@
+name: Publish to npm
+on:
+  push:
+    branches:
+      - "master"
+
+jobs:
+  release:
+    name: Publish
+    runs-on: ubuntu-latest
+    if: |
+      !contains(github.event.head_commit.message, '[skip ci]') &&
+      !contains(github.event.head_commit.message, '[skip release]')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "14.X"
+          registry-url: https://packagecloud.io/ratehub/npm/npm/
+          scope: "@ratehub"
+
+      - name: Install Dependencies & semantic-release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_READ }}
+        run: |
+          npm install -g semantic-release@18.x semantic-release-monorepo@7.x \
+            @semantic-release/git@10.x @semantic-release/commit-analyzer@9.x \
+            @semantic-release/npm@8.x @semantic-release/github@8.x \
+            @semantic-release/release-notes-generator@10.x
+          npm ci --only=production
+      - name: Generate Release (& Publish)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PACKAGE_CLOUD_API_KEY }}
+          NPM_TOKEN: ${{ secrets.PACKAGE_CLOUD_API_KEY }}
+          NPM_CONFIG_USERCONFIG: /home/runner/work/_temp/.npmrc
+          GITHUB_TOKEN: ${{ secrets.GH_RATEHUB_MACHINE_TOKEN }}
+        run: npx semantic-release
