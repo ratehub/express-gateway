@@ -1,3 +1,10 @@
+<h1 align="center">Ratehub Express gateway ⚙</h1>
+
+## 💬 What is this service? 
+
+This is ratehub's fork of [Express Gateway]. The project has been abandoned and we are using this fork to maintain our own version of the api gateway.
+
+
 #### A Microservices API Gateway Built Using Express.js and Express Middleware
 ----
 
